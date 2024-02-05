@@ -22,42 +22,78 @@ const BoardContainer = styled.div`
   display: grid;
   grid-template-columns: repeat(${(props: BoardProps) => props.size}, 1fr);
   gap: 0px;
-width: 800px;
-height:800px;
+  width: 800px;
+  height: 800px;
   margin: 0px auto;
 `;
 
 // Board component
 const Board: React.FC<BoardProps> = ({ size }) => {
-    // State to track selected cell
     const [selectedCell, setSelectedCell] = useState<number | null>(null);
+    const [currentPlayer, setCurrentPlayer] = useState<'player1' | 'player2'>('player1');
+    const [initialBoard, setInitialBoard] = useState<CellData[]>(
+        Array.from({ length: size * size }, (_, index) => ({
+            id: index,
+            piece: index < size * 2 ? 'pawn' : index >= size * (size - 2) ? 'pawn' : 'empty',
+        }))
+    );
 
-    // Dummy data for the initial board state
-    const initialBoard: CellData[] = Array.from({ length: size * size }, (_, index) => ({
-        id: index,
-        piece: index % 2 === 0 ? 'pawn' : 'king',
-    }));
-
-    // Function to handle cell click
     const handleCellClick = (cellId: number) => {
-        // Implement logic for cell selection here
-        setSelectedCell(cellId);
+        if (selectedCell !== null) {
+            const selectedPiece = initialBoard[selectedCell].piece;
+            const selectedPlayer = selectedPiece === 'pawn' ? 'player1' : 'player2';
+
+            if (isValidMove(selectedPiece, selectedCell, cellId, selectedPlayer)) {
+                const updatedBoard = [...initialBoard];
+                updatedBoard[cellId].piece = selectedPiece;
+                updatedBoard[selectedCell].piece = 'empty';
+
+                switchPlayers();
+                setInitialBoard(updatedBoard);
+                setSelectedCell(null);
+                checkForWin();
+            } else {
+                setSelectedCell(null);
+            }
+        } else {
+            if (initialBoard[cellId].piece !== 'empty') {
+                setSelectedCell(cellId);
+            }
+        }
+    };
+
+    const isValidMove = (piece: PieceType, from: number, to: number, player: 'player1' | 'player2'): boolean => {
+        // Implement your specific rules for valid moves based on piece type and player
+        return initialBoard[to].piece === 'empty';
+    };
+
+    const switchPlayers = () => {
+        setCurrentPlayer((prevPlayer) => (prevPlayer === 'player1' ? 'player2' : 'player1'));
+    };
+
+    const checkForWin = () => {
+        // Implement your win condition logic here
     };
 
     return (
-        <div className='border'>
-            <BoardContainer size={size}>
-                {initialBoard.map((cell) => (
-                    <Cell
-                        key={cell.id}
-                        selected={selectedCell === cell.id}
-                        even={(cell.id % size + Math.floor(cell.id / size)) % 2 === 0} // Calculate if the cell is even
-                        onClick={() => handleCellClick(cell.id)}
-                        piece={cell.piece}
-                    />
-                ))}
-            </BoardContainer>
-        </div>
+        <>
+            <div>
+                <h2>Current Player: {currentPlayer}</h2>
+            </div>
+            <div className='border'>
+                <BoardContainer size={size}>
+                    {initialBoard.map((cell) => (
+                        <Cell
+                            key={cell.id}
+                            selected={selectedCell === cell.id}
+                            even={(cell.id % size + Math.floor(cell.id / size)) % 2 === 0}
+                            onClick={() => handleCellClick(cell.id)}
+                            piece={cell.piece}
+                        />
+                    ))}
+                </BoardContainer>
+            </div>
+        </>
     );
 };
 
