@@ -2,9 +2,7 @@
 import React, { useState } from 'react';
 import Cell from './Cell';
 import styled from '@emotion/styled';
-
-// Define the types for your pieces
-type PieceType = 'empty' | 'pawn' | 'king';
+import { PieceType } from '../types';
 
 // Define the type for a cell on the board
 interface CellData {
@@ -31,17 +29,18 @@ const BoardContainer = styled.div`
 const Board: React.FC<BoardProps> = ({ size }) => {
     const [selectedCell, setSelectedCell] = useState<number | null>(null);
     const [currentPlayer, setCurrentPlayer] = useState<'player1' | 'player2'>('player1');
+    
     const [initialBoard, setInitialBoard] = useState<CellData[]>(
         Array.from({ length: size * size }, (_, index) => ({
             id: index,
-            piece: index < size * 2 ? 'pawn' : index >= size * (size - 2) ? 'pawn' : 'empty',
+            piece: index < size * 2 ? 'P1Pawn' : index >= size * (size - 2) ? 'P2Pawn' : 'empty',
         }))
     );
 
     const handleCellClick = (cellId: number) => {
         if (selectedCell !== null) {
             const selectedPiece = initialBoard[selectedCell].piece;
-            const selectedPlayer = selectedPiece === 'pawn' ? 'player1' : 'player2';
+            const selectedPlayer = getCurrentPlayer();
 
             if (isValidMove(selectedPiece, selectedCell, cellId, selectedPlayer)) {
                 const updatedBoard = [...initialBoard];
@@ -62,10 +61,41 @@ const Board: React.FC<BoardProps> = ({ size }) => {
         }
     };
 
-    const isValidMove = (piece: PieceType, from: number, to: number, player: 'player1' | 'player2'): boolean => {
-        // Implement your specific rules for valid moves based on piece type and player
-        return initialBoard[to].piece === 'empty';
+    // Helper function to get the player label for the current player
+    const getCurrentPlayer = (): 'player1' | 'player2' => {
+        return currentPlayer;
     };
+
+    const isValidMove = (piece: PieceType, from: number, to: number, player: 'player1' | 'player2'): boolean => {
+        const fromRow = Math.floor(from / size);
+        const fromCol = from % size;
+        const toRow = Math.floor(to / size);
+        const toCol = to % size;
+        const isPlayer1 = player === 'player1';
+
+        // Ensure the correct player is moving their pawn
+        if ((isPlayer1 && piece !== 'P1Pawn') || (!isPlayer1 && piece !== 'P2Pawn')) {
+            return false;
+        }
+
+        // A pawn can only move diagonally
+        const rowDifference = Math.abs(toRow - fromRow);
+        const colDifference = Math.abs(toCol - fromCol);
+
+        if (rowDifference !== 1 || colDifference !== 1) {
+            return false;
+        }
+
+        // Check if the destination cell is empty or has an opponent's piece
+        const destinationPiece = initialBoard[to].piece;
+
+        if (destinationPiece === 'empty' || (isPlayer1 ? destinationPiece === 'P2Pawn' : destinationPiece === 'P1Pawn')) {
+            return true;
+        }
+
+        return false;
+    };
+
 
     const switchPlayers = () => {
         setCurrentPlayer((prevPlayer) => (prevPlayer === 'player1' ? 'player2' : 'player1'));
@@ -89,6 +119,7 @@ const Board: React.FC<BoardProps> = ({ size }) => {
                             even={(cell.id % size + Math.floor(cell.id / size)) % 2 === 0}
                             onClick={() => handleCellClick(cell.id)}
                             piece={cell.piece}
+                            player={currentPlayer}
                         />
                     ))}
                 </BoardContainer>

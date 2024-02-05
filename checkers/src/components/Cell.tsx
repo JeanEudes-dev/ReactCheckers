@@ -9,6 +9,7 @@ interface CellProps {
     even: boolean;
     onClick: () => void;
     piece: PieceType;
+    player: 'player1' | 'player2';
 }
 
 const CellContainer = styled.div<{ selected: boolean; even: boolean }>`
@@ -22,9 +23,9 @@ const CellContainer = styled.div<{ selected: boolean; even: boolean }>`
   cursor: pointer;
 `;
 
-const Cell: React.FC<CellProps> = ({ selected, even, onClick, piece }) => (
+const Cell: React.FC<CellProps> = ({ selected, even, onClick, piece, player }) => (
     <CellContainer selected={selected} even={even} onClick={onClick}>
-        <Piece type={piece} />
+        <Piece type={piece} player={player} />
     </CellContainer>
 );
 
